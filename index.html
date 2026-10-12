@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRANG WEB CỦA TRẦN ĐỨC HUY</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        text-align: center;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #0d1b2a;
+        position: relative;
+    }
+
+    /* 1. Phông nền mờ lót phía sau cho đẹp */
+    #bg-blur {
+        position: absolute;
+        top: 0; left: 0; 
+        width: 100%; height: 100%;
+        background-size: cover;
+        background-position: center;
+        filter: blur(20px) brightness(0.5);
+        transform: scale(1.1);
+        z-index: 1;
+        display: none;
+    }
+
+    /* 2. CĂN CHỈNH ẢNH GỐC LỚN FULL TOÀN BỘ (KHÔNG BỊ PHÓNG TO VÀO MẮT) */
+    #bg-full-img {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain; /* Ép ảnh thu gọn vừa khít màn hình, thấy 100% toàn bộ bức ảnh */
+        z-index: 2;
+        display: none;
+    }
+
+    .content-box {
+        background-color: rgba(255, 255, 255, 0.92);
+        display: inline-block;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        position: relative;
+        z-index: 100;
+        max-width: 90%;
+        width: 400px;
+        margin-top: 40px;
+    }
+    textarea, input[type="text"] {
+        width: 90%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-family: inherit;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    button:hover { background-color: #0056b3; }
+
+    /* Modal hiển thị Mã QR */
+    #qr-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+    }
+    #qr-box {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+    #img-qr-code {
+        width: 180px;
+        height: 180px;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+    }
+
+    .falling-text {
+        position: absolute;
+        top: -60px;
+        font-weight: 800;
+        user-select: none;
+        pointer-events: none;
+        z-index: 10;
+        white-space: nowrap;
+        animation: meteorFall linear infinite;
+    }
+
+    @keyframes meteorFall {
+        0% { transform: translateY(0) scale(0.7); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translateY(105vh) scale(1.1); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Lớp hiển thị Ảnh -->
+<div id="bg-blur"></div>
+<img id="bg-full-img" src="" alt="Hình nền đầy đủ" />
+
+<h1 id="tieu-de-hello" style="position: relative; z-index: 100; color: white; margin-top: 20px;">HELLO</h1>
+
+<div class="content-box" id="khung-trang">
+    <h2 id="noi-dung">Tạo Thiệp Mưa Sao Băng</h2>
+
+    <div id="phu-khien-nhap">
+        <p><b>1. Lời chúc sinh nhật:</b><br>
+            <textarea id="noiDungChuc" rows="3" placeholder="Nhập lời chúc ở đây..."></textarea>
+        </p>
+        <p><b>2. Chọn hình nền (hoặc dán link):</b><br>
+            <input type="file" id="nutChonAnh" accept="image/*" style="margin-bottom: 5px;"><br>
+            <input type="text" id="linkAnh" placeholder="Dán link ảnh (.jpg, .png)">
+        </p>
+        <p><b>3. Chọn nhạc MP3 (hoặc dán link):</b><br>
+            <input type="file" id="nutChonNhac" accept="audio/*" style="margin-bottom: 5px;"><br>
+            <input type="text" id="linkMp3" placeholder="Dán link nhạc (.mp3)">
+        </p>
+        <hr>
+        <button onclick="taoMasoQR()">🎉 BẤM VÀO ĐÂY ĐỂ TẠO MÃ QR</button>
+    </div>
+</div>
+
+<!-- Khung hiện Mã QR -->
+<div id="qr-modal">
+    <div id="qr-box">
+        <h3 style="color: #333; margin-top: 0;">Mã QR Thiệp Của Bạn</h3>
+        <img id="img-qr-code" src="" alt="Mã QR" />
+        <p style="color: #666; font-size: 13px; margin-bottom: 0; margin-top: 10px;">Chụp màn hình mã QR gửi bạn bè nhé!</p>
+    </div>
+    <button onclick="dongQRVaChayHiieuUng()" style="background-color: #28a745;">✨ XEM HIỆU ỨNG NGAY ✨</button>
+</div>
+
+<audio id="myAudio" preload="auto"></audio>
+
+<script>
+var colorPalette = ["#FF007F", "#00F5FF", "#FFE600", "#FF5722", "#00FF66", "#9D00FF", "#FF1493", "#00E5FF", "#FF8C00", "#76FF03", "#F400A1"];
+var finalData = { text: "", img: "", audio: "" };
+var localAudioFile = null;
+
+window.onload = function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var textParam = urlParams.get('text');
+    var imgParam = urlParams.get('img');
+    var audioParam = urlParams.get('audio');
+
+    if (textParam || imgParam || audioParam) {
+        finalData = {
+            text: textParam ? decodeURIComponent(textParam) : "CHÚC MỪNG SINH NHẬT 🎉",
+            img: imgParam ? decodeURIComponent(imgParam) : "",
+            audio: audioParam ? decodeURIComponent(audioParam) : ""
+        };
+        chayGiaoDien(finalData.text, finalData.img, finalData.audio);
+    }
+}
+
+function taoMasoQR() {
+    var textInput = document.getElementById("noiDungChuc").value.trim();
+    var linkAnhInput = document.getElementById("linkAnh").value.trim();
+    var linkMp3Input = document.getElementById("linkMp3").value.trim();
+
+    var fileAnh = document.getElementById("nutChonAnh").files[0];
+    var fileNhac = document.getElementById("nutChonNhac").files[0];
+
+    finalData.text = textInput ? textInput : "CHÚC MỪNG SINH NHẬT 🎉";
+
+    if (fileNhac) {
+        localAudioFile = fileNhac;
+    } else if (linkMp3Input) {
+        finalData.audio = linkMp3Input;
+    }
+
+    if (fileAnh) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            finalData.img = e.target.result;
+            xuatMasoQR();
+        };
+        reader.readAsDataURL(fileAnh);
+    } else {
+        finalData.img = linkAnhInput;
+        xuatMasoQR();
+    }
+}
+
+function xuatMasoQR() {
+    var baseUrl = window.location.href.split('?')[0];
+    
+    var shareUrl = baseUrl + "?text=" + encodeURIComponent(finalData.text) + 
+                             "&img=" + encodeURIComponent(finalData.img.startsWith("http") ? finalData.img : "") + 
+                             "&audio=" + encodeURIComponent(finalData.audio);
+
+    var qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(shareUrl);
+    
+    document.getElementById("img-qr-code").src = qrApiUrl;
+    document.getElementById("qr-modal").style.display = "flex";
+}
+
+function dongQRVaChayHiieuUng() {
+    document.getElementById("qr-modal").style.display = "none";
+    chayGiaoDien(finalData.text, finalData.img, finalData.audio);
+}
+
+function chayGiaoDien(loiChuc, linkAnh, linkNhac) {
+    if (linkAnh) {
+        var bgBlur = document.getElementById("bg-blur");
+        var bgFullImg = document.getElementById("bg-full-img");
+
+        bgBlur.style.backgroundImage = "url('" + linkAnh + "')";
+        bgBlur.style.display = "block";
+
+        bgFullImg.src = linkAnh;
+        bgFullImg.style.display = "block";
+    }
+
+    var audio = document.getElementById("myAudio");
+    if (localAudioFile) {
+        audio.src = URL.createObjectURL(localAudioFile);
+        audio.load();
+        audio.play().catch(function(e){ console.log("Lỗi phát nhạc"); });
+    } else if (linkNhac) {
+        audio.src = linkNhac;
+        audio.load();
+        audio.play().catch(function(e){ console.log("Lỗi phát nhạc"); });
+    }
+
+    var tieuDe = document.getElementById("tieu-de-hello");
+    if (tieuDe) tieuDe.style.display = "none";
+
+    var khungTrang = document.getElementById("khung-trang");
+    if (khungTrang) khungTrang.style.display = "none";
+
+    taoMuaChuSaoBang(loiChuc);
+}
+
+function taoMuaChuSaoBang(fullText) {
+    var dsTu = fullText.split(/\s+/).filter(Boolean);
+    if (dsTu.length === 0) dsTu = ["CHÚC", "MỪNG", "SINH", "NHẬT", "🎉"];
+
+    setInterval(function() {
+        var item = document.createElement("div");
+        item.classList.add("falling-text");
+        
+        var text = dsTu[Math.floor(Math.random() * dsTu.length)];
+        var icons = [' ✨', ' ⭐', ' 🌟', ' 🎉', ' 💖', ' 💫', ''];
+        var randomIcon = icons[Math.floor(Math.random() * icons.length)];
+        
+        item.innerText = text + randomIcon;
+
+        var randomColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        item.style.color = randomColor;
+        item.style.textShadow = "0 0 10px " + randomColor + ", 0 0 20px rgba(255,255,255,0.8), 2px 2px 4px #000";
+
+        item.style.left = Math.random() * 90 + "vw"; 
+        item.style.animationDuration = (Math.random() * 2.5 + 2) + "s";
+        item.style.fontSize = (Math.random() * 16 + 20) + "px";
+
+        document.body.appendChild(item);
+
+        setTimeout(function() {
+            item.remove();
+        }, 5000);
+    }, 150); 
+}
+</script>
+
+</body>
+</html>
